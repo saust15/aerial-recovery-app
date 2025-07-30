@@ -1,4 +1,4 @@
-// Complete App.js with all pages
+// Complete App.js with all pages including History
 const App = () => {
     const { useState } = React;
     const [currentPage, setCurrentPage] = useState('home');
@@ -37,12 +37,9 @@ const App = () => {
                     <window.WaterPage recoveryData={recoveryData} /> : 
                     <div className="p-6 text-center">WaterPage component not loaded</div>;
             case 'history':
-                return (
-                    <div className="p-6 pb-24 text-center">
-                        <h2 className="text-2xl font-bold text-blue-600 mb-4">📊 History Page</h2>
-                        <p className="text-gray-600">Charts and progress tracking coming soon!</p>
-                    </div>
-                );
+                return window.HistoryPage ? 
+                    <window.HistoryPage recoveryData={recoveryData} /> : 
+                    <div className="p-6 text-center">HistoryPage component not loaded</div>;
             default:
                 return <div className="p-6 text-center">Page not found</div>;
         }
