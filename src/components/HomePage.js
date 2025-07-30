@@ -1,6 +1,18 @@
-// HomePage component
+// Updated HomePage component with injury area management
 const HomePage = ({ recoveryData }) => {
-    const { dailyData, savedData, saveToHistory } = recoveryData;
+    const { 
+        dailyData, 
+        savedData, 
+        userInjuryAreas, 
+        saveToHistory, 
+        addInjuryArea, 
+        removeInjuryArea 
+    } = recoveryData;
+    
+    const { useState } = React;
+    const [showAddInjury, setShowAddInjury] = useState(false);
+    const [newInjuryArea, setNewInjuryArea] = useState('');
+    
     const completedExercises = dailyData.exercises.filter(ex => ex.completed).length;
     const totalExercises = dailyData.exercises.length;
 
@@ -13,6 +25,20 @@ const HomePage = ({ recoveryData }) => {
         }
     };
 
+    const handleAddInjuryArea = (area) => {
+        const success = addInjuryArea(area);
+        if (success) {
+            setNewInjuryArea('');
+            setShowAddInjury(false);
+        }
+    };
+
+    const handleAddCustomInjury = () => {
+        if (newInjuryArea.trim()) {
+            handleAddInjuryArea(newInjuryArea);
+        }
+    };
+
     return (
         <div className="p-6 pb-24">
             <div className="text-center mb-8">
@@ -21,6 +47,73 @@ const HomePage = ({ recoveryData }) => {
                     <Icons.Calendar size={18} className="mr-2" />
                     <span>{dailyData.date}</span>
                 </div>
+            </div>
+
+            {/* Injury Areas Management */}
+            <div className="mb-6 bg-white rounded-2xl shadow-lg p-4 border-4 border-purple-500">
+                <h3 className="text-lg font-bold text-purple-600 mb-3">🩹 Your Injury Areas</h3>
+                <div className="flex flex-wrap gap-2 mb-3">
+                    {userInjuryAreas.map((area, index) => (
+                        <div key={index} className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-semibold flex items-center">
+                            {area}
+                            <button
+                                onClick={() => removeInjuryArea(area)}
+                                className="ml-2 text-purple-600 hover:text-purple-800"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    ))}
+                </div>
+                
+                {!showAddInjury ? (
+                    <button
+                        onClick={() => setShowAddInjury(true)}
+                        className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-xl font-semibold transition-all transform hover:scale-105"
+                    >
+                        + Add Injury Area
+                    </button>
+                ) : (
+                    <div className="space-y-2">
+                        <div className="flex flex-wrap gap-2 mb-2">
+                            {ExerciseData.INJURY_AREAS
+                                .filter(area => !userInjuryAreas.includes(area))
+                                .map((area, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => handleAddInjuryArea(area)}
+                                    className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded-full text-xs font-semibold transition-all"
+                                >
+                                    + {area}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                placeholder="Custom injury area"
+                                value={newInjuryArea}
+                                onChange={(e) => setNewInjuryArea(e.target.value)}
+                                className="flex-1 p-2 border-2 border-purple-300 rounded-lg text-sm"
+                            />
+                            <button
+                                onClick={handleAddCustomInjury}
+                                className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-semibold"
+                            >
+                                Add
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowAddInjury(false);
+                                    setNewInjuryArea('');
+                                }}
+                                className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm font-semibold"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Save Button */}
@@ -132,5 +225,4 @@ const HomePage = ({ recoveryData }) => {
     );
 };
 
-// Make available globally
 window.HomePage = HomePage;
