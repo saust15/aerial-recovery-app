@@ -1,6 +1,30 @@
-// PainPage component
+// Updated PainPage component with save button and history
 const PainPage = ({ recoveryData }) => {
-    const { dailyData, updatePainLevel, updatePainNotes } = recoveryData;
+    const { 
+        dailyData, 
+        userInjuryAreas, 
+        painNoteHistory, 
+        updatePainLevel, 
+        updatePainNotes, 
+        savePainNote 
+    } = recoveryData;
+
+    const { useState } = React;
+    const [selectedInjuryArea, setSelectedInjuryArea] = useState(userInjuryAreas[0] || '');
+
+    const handleSavePainNote = () => {
+        if (dailyData.painNotes.trim() && selectedInjuryArea) {
+            const success = savePainNote(selectedInjuryArea, dailyData.painNotes);
+            if (success) {
+                alert('💾 Pain note saved successfully! 📝');
+                updatePainNotes(''); // Clear the note after saving
+            } else {
+                alert('Please enter a note and select an injury area.');
+            }
+        } else {
+            alert('Please enter a note and select an injury area.');
+        }
+    };
 
     return (
         <div className="p-6 pb-24">
@@ -37,12 +61,36 @@ const PainPage = ({ recoveryData }) => {
 
                 <div className="bg-white rounded-2xl shadow-lg p-6 border-4 border-yellow-400">
                     <h3 className="text-xl font-bold text-yellow-600 mb-4 text-center">📝 Pain Notes</h3>
+                    
+                    {/* Injury Area Dropdown */}
+                    <div className="mb-4">
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Select Injury Area:</label>
+                        <select
+                            value={selectedInjuryArea}
+                            onChange={(e) => setSelectedInjuryArea(e.target.value)}
+                            className="w-full p-3 border-4 border-yellow-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-yellow-300 focus:border-yellow-500 text-gray-700 font-semibold"
+                        >
+                            <option value="">Choose injury area...</option>
+                            {userInjuryAreas.map((area, index) => (
+                                <option key={index} value={area}>{area}</option>
+                            ))}
+                        </select>
+                    </div>
+
                     <textarea
                         value={dailyData.painNotes}
                         onChange={(e) => updatePainNotes(e.target.value)}
                         placeholder="Describe location, triggers, or any observations about your pain today..."
-                        className="w-full h-32 p-3 border-4 border-red-300 rounded-xl resize-none focus:outline-none focus:ring-4 focus:ring-blue-300 focus:border-blue-500 text-gray-700"
+                        className="w-full h-32 p-3 border-4 border-red-300 rounded-xl resize-none focus:outline-none focus:ring-4 focus:ring-blue-300 focus:border-blue-500 text-gray-700 mb-4"
                     />
+                    
+                    <button
+                        onClick={handleSavePainNote}
+                        disabled={!dailyData.painNotes.trim() || !selectedInjuryArea}
+                        className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:bg-gray-400 disabled:transform-none disabled:shadow-none"
+                    >
+                        💾 Save Pain Note
+                    </button>
                 </div>
 
                 {dailyData.painLevel !== null && (
@@ -53,6 +101,35 @@ const PainPage = ({ recoveryData }) => {
                         </div>
                         <p className="text-blue-700 font-semibold">
                             Current pain level: <strong className="text-red-600 text-xl">{dailyData.painLevel}/10</strong>
+                        </p>
+                    </div>
+                )}
+
+                {/* Pain Note History */}
+                {painNoteHistory.length > 0 && (
+                    <div className="bg-white rounded-2xl shadow-lg p-6 border-4 border-purple-500">
+                        <h3 className="text-xl font-bold text-purple-600 mb-4 text-center">📚 Pain Note History</h3>
+                        <div className="overflow-x-auto">
+                            <div className="space-y-3">
+                                {painNoteHistory.slice(-10).reverse().map((entry) => (
+                                    <div key={entry.id} className="border border-gray-200 rounded-lg p-3">
+                                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-semibold">
+                                                {entry.date}
+                                            </span>
+                                            <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-semibold">
+                                                {entry.injuryArea}
+                                            </span>
+                                        </div>
+                                        <p className="text-gray-700 text-sm leading-relaxed break-words">
+                                            {entry.note}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <p className="text-center text-gray-500 text-xs mt-3">
+                            Showing last 10 entries
                         </p>
                     </div>
                 )}
