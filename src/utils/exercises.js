@@ -1,5 +1,27 @@
-// Like a static data class with constants
+// Updated exercises.js with injury areas
 const ExerciseData = {
+    // Common aerial injury areas
+    INJURY_AREAS: [
+        "Hip Labrum",
+        "Knee Meniscus", 
+        "Tennis Elbow (Lateral Epicondylitis)",
+        "Golfer's Elbow (Medial Epicondylitis)",
+        "Shoulder Impingement",
+        "Rotator Cuff",
+        "Wrist Strain",
+        "Lower Back",
+        "Hip Flexors",
+        "Ankle Sprain",
+        "Neck Strain",
+        "Forearm Tendonitis",
+        "Rib Subluxation",
+        "Thoracic Spine",
+        "IT Band Syndrome",
+        "Achilles Tendonitis",
+        "Bicep Tendonitis",
+        "Tricep Strain"
+    ],
+
     // Default exercise library (like seed data)
     DEFAULT_EXERCISES: [
         {
@@ -66,16 +88,6 @@ const ExerciseData = {
             repRange: "15-30 sec hold",
             completed: false
         }
-    ],
-
-    // Common target areas (like an enum)
-    TARGET_AREAS: [
-        "Hip Labrum",
-        "Knee Meniscus", 
-        "Hip/Knee Support",
-        "Overall Mobility",
-        "Overall Strength",
-        "Knee Support"
     ],
 
     // Helper methods
