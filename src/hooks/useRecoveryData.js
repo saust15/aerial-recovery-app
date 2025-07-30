@@ -1,9 +1,8 @@
-// Custom React Hook - like a Service class in C#
-// Handles all the business logic for recovery data management
+// Updated useRecoveryData.js with injury areas and pain notes
 const useRecoveryData = () => {
     const { useState, useEffect } = React;
     
-    // State management (like private properties in a C# class)
+    // State management
     const [dailyData, setDailyData] = useState({
         exercises: [],
         painLevel: null,
@@ -14,9 +13,11 @@ const useRecoveryData = () => {
     
     const [savedData, setSavedData] = useState([]);
     const [availableExercises, setAvailableExercises] = useState([]);
+    const [userInjuryAreas, setUserInjuryAreas] = useState([]);
+    const [painNoteHistory, setPainNoteHistory] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Initialize data on component mount (like a constructor)
+    // Initialize data on component mount
     useEffect(() => {
         initializeData();
     }, []);
@@ -35,7 +36,29 @@ const useRecoveryData = () => {
         }
     }, [availableExercises, isLoading]);
 
-    // Initialize all data (like a setup method)
+    // Auto-save injury areas when they change
+    useEffect(() => {
+        if (!isLoading && userInjuryAreas.length >= 0) {
+            try {
+                localStorage.setItem('userInjuryAreas', JSON.stringify(userInjuryAreas));
+            } catch (error) {
+                console.error('Error saving injury areas:', error);
+            }
+        }
+    }, [userInjuryAreas, isLoading]);
+
+    // Auto-save pain note history
+    useEffect(() => {
+        if (!isLoading) {
+            try {
+                localStorage.setItem('painNoteHistory', JSON.stringify(painNoteHistory));
+            } catch (error) {
+                console.error('Error saving pain note history:', error);
+            }
+        }
+    }, [painNoteHistory, isLoading]);
+
+    // Initialize all data
     const initializeData = async () => {
         try {
             // Load exercise library
@@ -45,6 +68,21 @@ const useRecoveryData = () => {
                 StorageManager.saveExerciseLibrary(exercises);
             }
             setAvailableExercises(exercises);
+
+            // Load user injury areas
+            const savedInjuryAreas = localStorage.getItem('userInjuryAreas');
+            if (savedInjuryAreas) {
+                setUserInjuryAreas(JSON.parse(savedInjuryAreas));
+            } else {
+                // Default to hip labrum and knee support as mentioned
+                setUserInjuryAreas(["Hip Labrum", "Knee Support"]);
+            }
+
+            // Load pain note history
+            const savedPainNotes = localStorage.getItem('painNoteHistory');
+            if (savedPainNotes) {
+                setPainNoteHistory(JSON.parse(savedPainNotes));
+            }
 
             // Load history
             const history = StorageManager.loadHistory();
@@ -75,8 +113,7 @@ const useRecoveryData = () => {
         }
     };
 
-    // Business logic methods (like public methods in a C# service)
-    
+    // Business logic methods
     const toggleExercise = (exerciseId) => {
         setDailyData(prev => ({
             ...prev,
@@ -120,6 +157,33 @@ const useRecoveryData = () => {
         setDailyData(prev => ({ ...prev, painNotes: notes }));
     };
 
+    const savePainNote = (injuryArea, note) => {
+        if (note.trim() && injuryArea) {
+            const newPainNote = {
+                id: Date.now(),
+                date: new Date().toDateString(),
+                injuryArea: injuryArea,
+                note: note.trim(),
+                timestamp: new Date().toISOString()
+            };
+            setPainNoteHistory(prev => [...prev, newPainNote]);
+            return true;
+        }
+        return false;
+    };
+
+    const addInjuryArea = (area) => {
+        if (area.trim() && !userInjuryAreas.includes(area.trim())) {
+            setUserInjuryAreas(prev => [...prev, area.trim()]);
+            return true;
+        }
+        return false;
+    };
+
+    const removeInjuryArea = (area) => {
+        setUserInjuryAreas(prev => prev.filter(a => a !== area));
+    };
+
     const addWater = () => {
         setDailyData(prev => ({ ...prev, waterIntake: prev.waterIntake + 1 }));
     };
@@ -138,12 +202,14 @@ const useRecoveryData = () => {
         return false;
     };
 
-    // Return all state and methods (like a public interface)
+    // Return all state and methods
     return {
         // State
         dailyData,
         savedData,
         availableExercises,
+        userInjuryAreas,
+        painNoteHistory,
         isLoading,
         
         // Methods
@@ -153,6 +219,9 @@ const useRecoveryData = () => {
         addCustomExercise,
         updatePainLevel,
         updatePainNotes,
+        savePainNote,
+        addInjuryArea,
+        removeInjuryArea,
         addWater,
         removeWater,
         saveToHistory
