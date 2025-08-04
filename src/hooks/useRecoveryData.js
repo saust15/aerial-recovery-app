@@ -123,6 +123,31 @@ const useRecoveryData = () => {
         }));
     };
 
+    const updateExerciseReps = (exerciseId, reps) => {
+        setDailyData(prev => ({
+            ...prev,
+            exercises: prev.exercises.map(ex => 
+                ex.id === exerciseId ? { ...ex, actualReps: reps } : ex
+            )
+        }));
+    };
+
+    const updateExerciseDetails = (exerciseId, updates) => {
+        setAvailableExercises(prev => 
+            prev.map(ex => 
+                ex.id === exerciseId ? { ...ex, ...updates } : ex
+            )
+        );
+        
+        // Also update in today's exercises if present
+        setDailyData(prev => ({
+            ...prev,
+            exercises: prev.exercises.map(ex => 
+                ex.id === exerciseId ? { ...ex, ...updates } : ex
+            )
+        }));
+    };
+
     const addExerciseToToday = (exerciseId) => {
         const exercise = availableExercises.find(ex => ex.id === exerciseId);
         if (exercise && !dailyData.exercises.find(ex => ex.id === exerciseId)) {
@@ -202,6 +227,118 @@ const useRecoveryData = () => {
         return false;
     };
 
+    const exportToPDF = () => {
+        try {
+            // Create the report content
+            const reportData = {
+                generatedDate: new Date().toLocaleDateString(),
+                totalDaysTracked: savedData.length,
+                summary: {
+                    avgPain: savedData.length > 0 ? (savedData.reduce((sum, day) => sum + (day.painLevel || 0), 0) / savedData.length).toFixed(1) : 0,
+                    avgWater: savedData.length > 0 ? (savedData.reduce((sum, day) => sum + (day.waterIntake || 0), 0) / savedData.length).toFixed(1) : 0,
+                    totalExercises: savedData.reduce((sum, day) => sum + (day.completedExercises || 0), 0)
+                },
+                dailyEntries: savedData,
+                painNotes: painNoteHistory
+            };
+
+            // Create HTML content for the PDF
+            const htmlContent = generateReportHTML(reportData);
+            
+            // Create a new window and print to PDF
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+            
+            return true;
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            return false;
+        }
+    };
+
+    const generateReportHTML = (data) => {
+        return `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Aerial Recovery Report</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
+                    .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #e74c3c; padding-bottom: 20px; }
+                    .summary { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 30px; }
+                    .summary h3 { color: #e74c3c; margin-top: 0; }
+                    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 20px 0; }
+                    .stat-box { text-align: center; padding: 15px; background: white; border: 2px solid #ddd; border-radius: 8px; }
+                    .stat-number { font-size: 24px; font-weight: bold; color: #e74c3c; }
+                    .daily-entry { margin: 15px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+                    .date { font-weight: bold; color: #3498db; margin-bottom: 10px; }
+                    .pain-notes { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; }
+                    @media print { body { margin: 0; } .no-print { display: none; } }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>🎪 Aerial Recovery Report</h1>
+                    <p>Generated on ${data.generatedDate}</p>
+                    <p>Total Days Tracked: ${data.totalDaysTracked}</p>
+                </div>
+                
+                <div class="summary">
+                    <h3>📊 Summary Statistics</h3>
+                    <div class="stat-grid">
+                        <div class="stat-box">
+                            <div class="stat-number">${data.summary.avgPain}</div>
+                            <div>Average Pain Level</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number">${data.summary.avgWater}</div>
+                            <div>Average Water Intake</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-number">${data.summary.totalExercises}</div>
+                            <div>Total Exercises Completed</div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>📅 Daily Progress History</h3>
+                ${data.dailyEntries.map(entry => `
+                    <div class="daily-entry">
+                        <div class="date">${new Date(entry.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                        <p><strong>Pain Level:</strong> ${entry.painLevel !== null ? entry.painLevel + '/10' : 'Not recorded'}</p>
+                        <p><strong>Water Intake:</strong> ${entry.waterIntake || 0} glasses</p>
+                        <p><strong>Exercises Completed:</strong> ${entry.completedExercises || 0}/${entry.totalExercises || 0}</p>
+                        ${entry.painNotes ? `<p><strong>Notes:</strong> "${entry.painNotes}"</p>` : ''}
+                        ${entry.exercises && entry.exercises.length > 0 ? `
+                            <p><strong>Exercises:</strong></p>
+                            <ul>
+                                ${entry.exercises.map(ex => `
+                                    <li>${ex.name} ${ex.completed ? '✅' : '❌'} ${ex.actualReps ? `(${ex.actualReps} reps)` : ''}</li>
+                                `).join('')}
+                            </ul>
+                        ` : ''}
+                    </div>
+                `).join('')}
+
+                ${data.painNotes.length > 0 ? `
+                    <div class="pain-notes">
+                        <h3>📝 Pain Notes History</h3>
+                        ${data.painNotes.map(note => `
+                            <div style="margin: 10px 0; padding: 10px; border-left: 4px solid #f39c12;">
+                                <p><strong>${note.date} - ${note.injuryArea}</strong></p>
+                                <p>${note.note}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+            </body>
+            </html>
+        `;
+    };
+
     // Return all state and methods
     return {
         // State
@@ -214,6 +351,8 @@ const useRecoveryData = () => {
         
         // Methods
         toggleExercise,
+        updateExerciseReps,
+        updateExerciseDetails,
         addExerciseToToday,
         removeExerciseFromToday,
         addCustomExercise,
@@ -224,7 +363,8 @@ const useRecoveryData = () => {
         removeInjuryArea,
         addWater,
         removeWater,
-        saveToHistory
+        saveToHistory,
+        exportToPDF
     };
 };
 

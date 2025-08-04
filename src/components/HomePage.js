@@ -6,7 +6,8 @@ const HomePage = ({ recoveryData }) => {
         userInjuryAreas, 
         saveToHistory, 
         addInjuryArea, 
-        removeInjuryArea 
+        removeInjuryArea,
+        exportToPDF
     } = recoveryData;
     
     const { useState } = React;
@@ -22,6 +23,20 @@ const HomePage = ({ recoveryData }) => {
             alert('📊 Day saved to history! Great work on your recovery journey! 🎉');
         } else {
             alert('Error saving data. Please try again.');
+        }
+    };
+
+    const handleExportPDF = () => {
+        if (savedData.length === 0) {
+            alert('📋 No data to export yet. Save some daily progress first!');
+            return;
+        }
+        
+        const success = exportToPDF();
+        if (success) {
+            alert('📄 Report generated! Check your browser\'s print dialog.');
+        } else {
+            alert('❌ Error generating report. Please try again.');
         }
     };
 
@@ -117,12 +132,19 @@ const HomePage = ({ recoveryData }) => {
             </div>
 
             {/* Save Button */}
-            <div className="mb-6">
+            <div className="mb-6 space-y-3">
                 <button
                     onClick={handleSaveProgress}
                     className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 border-4 border-yellow-400"
                 >
                     💾 Save Today's Progress
+                </button>
+                
+                <button
+                    onClick={handleExportPDF}
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 border-4 border-orange-400"
+                >
+                    📄 Export Recovery Report (PDF)
                 </button>
             </div>
 

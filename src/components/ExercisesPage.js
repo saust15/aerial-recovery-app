@@ -3,7 +3,9 @@ const ExercisesPage = ({ recoveryData }) => {
     const { 
         dailyData, 
         availableExercises, 
-        toggleExercise, 
+        toggleExercise,
+        updateExerciseReps,
+        updateExerciseDetails,
         addExerciseToToday, 
         removeExerciseFromToday, 
         addCustomExercise 
@@ -11,6 +13,7 @@ const ExercisesPage = ({ recoveryData }) => {
 
     const { useState } = React;
     const [showAddExercise, setShowAddExercise] = useState(false);
+    const [editingExercise, setEditingExercise] = useState(null);
     const [newExercise, setNewExercise] = useState({
         name: '',
         description: '',
@@ -29,6 +32,36 @@ const ExercisesPage = ({ recoveryData }) => {
             setNewExercise({ name: '', description: '', targetArea: '', repRange: '' });
             setShowAddExercise(false);
         }
+    };
+
+    const handleEditExercise = (exercise) => {
+        setEditingExercise({
+            ...exercise,
+            editedName: exercise.name,
+            editedDescription: exercise.description,
+            editedTargetArea: exercise.targetArea,
+            editedRepRange: exercise.repRange
+        });
+    };
+
+    const handleSaveEdit = () => {
+        if (editingExercise) {
+            updateExerciseDetails(editingExercise.id, {
+                name: editingExercise.editedName,
+                description: editingExercise.editedDescription,
+                targetArea: editingExercise.editedTargetArea,
+                repRange: editingExercise.editedRepRange
+            });
+            setEditingExercise(null);
+        }
+    };
+
+    const handleCancelEdit = () => {
+        setEditingExercise(null);
+    };
+
+    const handleRepChange = (exerciseId, reps) => {
+        updateExerciseReps(exerciseId, reps);
     };
 
     return (
@@ -132,30 +165,109 @@ const ExercisesPage = ({ recoveryData }) => {
                                     )}
                                 </button>
                                 <div className="flex-1">
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex-1">
-                                            <h3 className={`text-lg font-bold ${exercise.completed ? 'text-green-600 line-through' : 'text-blue-600'}`}>
-                                                {exercise.name}
-                                            </h3>
-                                            <div className="flex flex-wrap gap-2 mb-2">
-                                                <span className="inline-block bg-gradient-to-r from-yellow-400 to-red-500 text-white text-sm px-3 py-1 rounded-full font-semibold shadow-md">
-                                                    {exercise.targetArea}
-                                                </span>
-                                                {exercise.repRange && (
-                                                    <span className="inline-block bg-gradient-to-r from-blue-400 to-purple-500 text-white text-sm px-3 py-1 rounded-full font-semibold shadow-md">
-                                                        {exercise.repRange}
-                                                    </span>
-                                                )}
+                                    {editingExercise && editingExercise.id === exercise.id ? (
+                                        /* Editing Mode */
+                                        <div className="space-y-3">
+                                            <input
+                                                type="text"
+                                                value={editingExercise.editedName}
+                                                onChange={(e) => setEditingExercise(prev => ({ ...prev, editedName: e.target.value }))}
+                                                className="w-full p-2 border-2 border-blue-300 rounded-lg font-bold"
+                                                placeholder="Exercise name"
+                                            />
+                                            <textarea
+                                                value={editingExercise.editedDescription}
+                                                onChange={(e) => setEditingExercise(prev => ({ ...prev, editedDescription: e.target.value }))}
+                                                className="w-full p-2 border-2 border-blue-300 rounded-lg"
+                                                placeholder="Description"
+                                                rows="2"
+                                            />
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={editingExercise.editedTargetArea}
+                                                    onChange={(e) => setEditingExercise(prev => ({ ...prev, editedTargetArea: e.target.value }))}
+                                                    className="p-2 border-2 border-blue-300 rounded-lg"
+                                                    placeholder="Target area"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={editingExercise.editedRepRange}
+                                                    onChange={(e) => setEditingExercise(prev => ({ ...prev, editedRepRange: e.target.value }))}
+                                                    className="p-2 border-2 border-blue-300 rounded-lg"
+                                                    placeholder="Rep range"
+                                                />
                                             </div>
-                                            <p className="text-gray-700 text-sm leading-relaxed">{exercise.description}</p>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={handleSaveEdit}
+                                                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold"
+                                                >
+                                                    ✅ Save
+                                                </button>
+                                                <button
+                                                    onClick={handleCancelEdit}
+                                                    className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold"
+                                                >
+                                                    ❌ Cancel
+                                                </button>
+                                            </div>
                                         </div>
-                                        <button
-                                            onClick={() => removeExerciseFromToday(exercise.id)}
-                                            className="ml-2 text-red-500 hover:text-red-700 p-1"
-                                        >
-                                            ✕
-                                        </button>
-                                    </div>
+                                    ) : (
+                                        /* Display Mode */
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <h3 className={`text-lg font-bold ${exercise.completed ? 'text-green-600 line-through' : 'text-blue-600'}`}>
+                                                    {exercise.name}
+                                                </h3>
+                                                <div className="flex flex-wrap gap-2 mb-2">
+                                                    <span className="inline-block bg-gradient-to-r from-yellow-400 to-red-500 text-white text-sm px-3 py-1 rounded-full font-semibold shadow-md">
+                                                        {exercise.targetArea}
+                                                    </span>
+                                                    {exercise.repRange && (
+                                                        <span className="inline-block bg-gradient-to-r from-blue-400 to-purple-500 text-white text-sm px-3 py-1 rounded-full font-semibold shadow-md">
+                                                            {exercise.repRange}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-gray-700 text-sm leading-relaxed mb-3">{exercise.description}</p>
+                                                
+                                                {/* Rep tracking input */}
+                                                <div className="flex items-center gap-3">
+                                                    <label className="text-sm font-semibold text-gray-700">Reps completed:</label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={exercise.actualReps || ''}
+                                                        onChange={(e) => handleRepChange(exercise.id, e.target.value)}
+                                                        className="w-20 p-1 border-2 border-gray-300 rounded text-center"
+                                                        placeholder="0"
+                                                    />
+                                                    {exercise.actualReps && (
+                                                        <span className="text-sm text-green-600 font-semibold">
+                                                            ✅ {exercise.actualReps} reps logged
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col gap-2 ml-2">
+                                                <button
+                                                    onClick={() => handleEditExercise(exercise)}
+                                                    className="text-blue-500 hover:text-blue-700 p-1"
+                                                    title="Edit exercise"
+                                                >
+                                                    ✏️
+                                                </button>
+                                                <button
+                                                    onClick={() => removeExerciseFromToday(exercise.id)}
+                                                    className="text-red-500 hover:text-red-700 p-1"
+                                                    title="Remove from today"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
