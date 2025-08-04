@@ -248,7 +248,9 @@ const useRecoveryData = () => {
             if (isMobile) {
                 // For mobile: create a downloadable HTML file
                 const htmlContent = generateReportHTML(reportData);
-                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const blob = new Blob([htmlContent], { 
+                    type: 'text/html;charset=utf-8' 
+                });
                 const url = URL.createObjectURL(blob);
                 
                 // Create download link
@@ -284,10 +286,11 @@ const useRecoveryData = () => {
     const generateReportHTML = (data) => {
         return `
             <!DOCTYPE html>
-            <html>
+            <html lang="en">
             <head>
-                <title>Aerial Recovery Report</title>
+                <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Aerial Recovery Report</title>
                 <style>
                     body { font-family: Arial, sans-serif; margin: 20px; color: #333; line-height: 1.6; }
                     .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #e74c3c; padding-bottom: 20px; }
@@ -300,6 +303,7 @@ const useRecoveryData = () => {
                     .date { font-weight: bold; color: #3498db; margin-bottom: 10px; }
                     .pain-notes { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; }
                     .mobile-instructions { background: #e8f4fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+                    .icon { font-style: normal; }
                     @media screen and (max-width: 768px) {
                         body { margin: 10px; font-size: 14px; }
                         .stat-grid { grid-template-columns: 1fr; }
@@ -314,17 +318,17 @@ const useRecoveryData = () => {
             </head>
             <body>
                 <div class="mobile-instructions">
-                    📱 <strong>Mobile Users:</strong> This report has been downloaded as an HTML file. You can print it to PDF using your browser's print function, or view it as-is. Look for the downloaded file in your Downloads folder.
+                    <span class="icon">📱</span> <strong>Mobile Users:</strong> This report has been downloaded as an HTML file. You can print it to PDF using your browser's print function, or view it as-is. Look for the downloaded file in your Downloads folder.
                 </div>
                 
                 <div class="header">
-                    <h1>🎪 Aerial Recovery Report</h1>
+                    <h1><span class="icon">🎪</span> Aerial Recovery Report</h1>
                     <p>Generated on ${data.generatedDate}</p>
                     <p>Total Days Tracked: ${data.totalDaysTracked}</p>
                 </div>
                 
                 <div class="summary">
-                    <h3>📊 Summary Statistics</h3>
+                    <h3><span class="icon">📊</span> Summary Statistics</h3>
                     <div class="stat-grid">
                         <div class="stat-box">
                             <div class="stat-number">${data.summary.avgPain}</div>
@@ -341,7 +345,7 @@ const useRecoveryData = () => {
                     </div>
                 </div>
 
-                <h3>📅 Daily Progress History</h3>
+                <h3><span class="icon">📅</span> Daily Progress History</h3>
                 ${data.dailyEntries.map(entry => `
                     <div class="daily-entry">
                         <div class="date">${new Date(entry.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
@@ -353,7 +357,7 @@ const useRecoveryData = () => {
                             <p><strong>Exercises:</strong></p>
                             <ul>
                                 ${entry.exercises.map(ex => `
-                                    <li>${ex.name} ${ex.completed ? '✅' : '❌'} ${ex.actualReps ? `(${ex.actualReps} reps)` : ''}</li>
+                                    <li>${ex.name} ${ex.completed ? '<span class="icon">✅</span>' : '<span class="icon">❌</span>'} ${ex.actualReps ? `(${ex.actualReps} reps)` : ''}</li>
                                 `).join('')}
                             </ul>
                         ` : ''}
@@ -362,7 +366,7 @@ const useRecoveryData = () => {
 
                 ${data.painNotes.length > 0 ? `
                     <div class="pain-notes">
-                        <h3>📝 Pain Notes History</h3>
+                        <h3><span class="icon">📝</span> Pain Notes History</h3>
                         ${data.painNotes.map(note => `
                             <div style="margin: 10px 0; padding: 10px; border-left: 4px solid #f39c12;">
                                 <p><strong>${note.date} - ${note.injuryArea}</strong></p>
@@ -373,7 +377,7 @@ const useRecoveryData = () => {
                 ` : ''}
                 
                 <div style="margin-top: 30px; text-align: center; color: #666; font-size: 12px;">
-                    <p>Report generated by Aerial Recovery App 🎪</p>
+                    <p>Report generated by Aerial Recovery App <span class="icon">🎪</span></p>
                 </div>
             </body>
             </html>
