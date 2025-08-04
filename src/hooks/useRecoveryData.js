@@ -357,7 +357,7 @@ const useRecoveryData = () => {
                             <p><strong>Exercises:</strong></p>
                             <ul>
                                 ${entry.exercises.map(ex => `
-                                    <li>${ex.name} ${ex.completed ? '<span class="icon">✅</span>' : '<span class="icon">❌</span>'} ${ex.actualReps ? `(${ex.actualReps} reps)` : ''}</li>
+                                    <li>${ex.name} - ${ex.completed ? (ex.actualReps ? `${ex.actualReps} reps completed` : 'Completed') : 'Not completed'}</li>
                                 `).join('')}
                             </ul>
                         ` : ''}
