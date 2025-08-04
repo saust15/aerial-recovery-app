@@ -242,15 +242,37 @@ const useRecoveryData = () => {
                 painNotes: painNoteHistory
             };
 
-            // Create HTML content for the PDF
-            const htmlContent = generateReportHTML(reportData);
+            // Check if we're on mobile
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             
-            // Create a new window and print to PDF
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(htmlContent);
-            printWindow.document.close();
-            printWindow.focus();
-            printWindow.print();
+            if (isMobile) {
+                // For mobile: create a downloadable HTML file
+                const htmlContent = generateReportHTML(reportData);
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                
+                // Create download link
+                const downloadLink = document.createElement('a');
+                downloadLink.href = url;
+                downloadLink.download = `aerial-recovery-report-${new Date().toISOString().split('T')[0]}.html`;
+                downloadLink.style.display = 'none';
+                
+                // Trigger download
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+                
+                // Clean up URL
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+            } else {
+                // For desktop: use print dialog
+                const htmlContent = generateReportHTML(reportData);
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(htmlContent);
+                printWindow.document.close();
+                printWindow.focus();
+                printWindow.print();
+            }
             
             return true;
         } catch (error) {
@@ -265,21 +287,36 @@ const useRecoveryData = () => {
             <html>
             <head>
                 <title>Aerial Recovery Report</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <style>
-                    body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
+                    body { font-family: Arial, sans-serif; margin: 20px; color: #333; line-height: 1.6; }
                     .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #e74c3c; padding-bottom: 20px; }
                     .summary { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 30px; }
                     .summary h3 { color: #e74c3c; margin-top: 0; }
-                    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 20px 0; }
+                    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; margin: 20px 0; }
                     .stat-box { text-align: center; padding: 15px; background: white; border: 2px solid #ddd; border-radius: 8px; }
                     .stat-number { font-size: 24px; font-weight: bold; color: #e74c3c; }
-                    .daily-entry { margin: 15px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+                    .daily-entry { margin: 15px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; page-break-inside: avoid; }
                     .date { font-weight: bold; color: #3498db; margin-bottom: 10px; }
                     .pain-notes { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; }
-                    @media print { body { margin: 0; } .no-print { display: none; } }
+                    .mobile-instructions { background: #e8f4fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+                    @media screen and (max-width: 768px) {
+                        body { margin: 10px; font-size: 14px; }
+                        .stat-grid { grid-template-columns: 1fr; }
+                        .header h1 { font-size: 24px; }
+                    }
+                    @media print { 
+                        body { margin: 0; font-size: 12px; } 
+                        .no-print, .mobile-instructions { display: none; }
+                        .daily-entry { page-break-inside: avoid; margin: 10px 0; }
+                    }
                 </style>
             </head>
             <body>
+                <div class="mobile-instructions">
+                    📱 <strong>Mobile Users:</strong> This report has been downloaded as an HTML file. You can print it to PDF using your browser's print function, or view it as-is. Look for the downloaded file in your Downloads folder.
+                </div>
+                
                 <div class="header">
                     <h1>🎪 Aerial Recovery Report</h1>
                     <p>Generated on ${data.generatedDate}</p>
@@ -334,6 +371,10 @@ const useRecoveryData = () => {
                         `).join('')}
                     </div>
                 ` : ''}
+                
+                <div style="margin-top: 30px; text-align: center; color: #666; font-size: 12px;">
+                    <p>Report generated by Aerial Recovery App 🎪</p>
+                </div>
             </body>
             </html>
         `;
