@@ -2,71 +2,120 @@
 const HistoryPage = ({ recoveryData }) => {
     const { savedData, painNoteHistory } = recoveryData;
 
-    // Simple chart component for trend visualization
-    const SimpleChart = ({ data, title, color, yLabel, maxValue = null }) => {
+    // Enhanced chart component with better visuals
+    const TrendChart = ({ data, title, color, yLabel, maxValue = null, icon }) => {
         if (data.length === 0) return (
             <div className="bg-white rounded-2xl shadow-lg p-6 border-4 border-gray-300 text-center">
-                <h3 className="text-lg font-bold text-gray-500 mb-2">{title}</h3>
-                <p className="text-gray-400">No data yet - start tracking!</p>
+                <h3 className="text-lg font-bold text-gray-500 mb-2 flex items-center justify-center">
+                    <span className="mr-2">{icon}</span> {title}
+                </h3>
+                <div className="h-32 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <p className="text-gray-400">No data yet - start tracking!</p>
+                </div>
             </div>
         );
 
-        const chartMaxValue = maxValue || Math.max(...data.map(d => d.value));
-        const chartMinValue = Math.min(...data.map(d => d.value));
-        const range = chartMaxValue - chartMinValue || 1;
+        // Get last 14 days of data
+        const chartData = data.slice(-14);
+        const values = chartData.map(d => d.value);
+        const chartMaxValue = maxValue || Math.max(...values, 1);
+        const chartMinValue = 0; // Always start from 0 for better visualization
+        const range = chartMaxValue - chartMinValue;
 
         return (
             <div className="bg-white rounded-2xl shadow-lg p-4 border-4 border-blue-500">
-                <h3 className="text-lg font-bold text-blue-600 mb-4 text-center">{title}</h3>
-                <div className="h-32 flex items-end justify-between px-2 bg-gray-50 rounded-lg">
-                    {data.slice(-14).map((point, index) => {
-                        const height = range > 0 ? ((point.value - chartMinValue) / range) * 100 : 50;
-                        const displayHeight = Math.max(height, 10);
-                        
-                        return (
-                            <div key={index} className="flex flex-col items-center flex-1 mx-1">
-                                <div 
-                                    className={`w-full ${color} rounded-t transition-all duration-500 relative group`}
-                                    style={{ height: `${displayHeight}%` }}
-                                >
-                                    {/* Tooltip */}
-                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                        {point.value} {yLabel}
+                <h3 className="text-lg font-bold text-blue-600 mb-4 text-center flex items-center justify-center">
+                    <span className="mr-2">{icon}</span> {title}
+                </h3>
+                
+                {/* Chart Area */}
+                <div className="h-40 flex items-end justify-between px-3 py-2 bg-gradient-to-t from-gray-100 to-gray-50 rounded-lg border-2 border-gray-200 relative">
+                    {/* Y-axis labels */}
+                    <div className="absolute left-1 top-0 h-full flex flex-col justify-between text-xs text-gray-400 py-2">
+                        <span>{chartMaxValue}</span>
+                        <span>{Math.round(chartMaxValue / 2)}</span>
+                        <span>0</span>
+                    </div>
+                    
+                    {/* Bars */}
+                    <div className="flex items-end justify-between w-full ml-6">
+                        {chartData.map((point, index) => {
+                            const height = range > 0 ? ((point.value - chartMinValue) / range) * 100 : 20;
+                            const displayHeight = Math.max(height, 8); // Minimum height for visibility
+                            
+                            return (
+                                <div key={index} className="flex flex-col items-center flex-1 mx-0.5 group relative">
+                                    {/* Bar */}
+                                    <div 
+                                        className={`w-full ${color} rounded-t-md transition-all duration-300 hover:opacity-80 cursor-pointer relative`}
+                                        style={{ height: `${displayHeight}%`, minHeight: '8px' }}
+                                    >
+                                        {/* Value label on top of bar */}
+                                        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-semibold text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            {point.value}
+                                        </div>
+                                        
+                                        {/* Tooltip */}
+                                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 mb-2">
+                                            <div className="font-semibold">{point.value} {yLabel}</div>
+                                            <div className="text-gray-300">{new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                                            {/* Arrow */}
+                                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                                        </div>
                                     </div>
+                                    
+                                    {/* Date label */}
+                                    <span className="text-xs text-gray-500 mt-2 transform -rotate-45 origin-center w-8 h-4 flex items-center justify-center">
+                                        {new Date(point.date).toLocaleDateString('en-US', { day: 'numeric' })}
+                                    </span>
                                 </div>
-                                <span className="text-xs text-gray-500 mt-1 transform rotate-45 origin-bottom-left w-8 overflow-hidden">
-                                    {new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                </span>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
+                    </div>
                 </div>
-                <div className="text-center mt-4">
+                
+                {/* Chart footer with latest value */}
+                <div className="text-center mt-4 p-2 bg-gray-50 rounded-lg">
                     <span className="text-sm text-gray-600">
-                        Latest: <strong>{data[data.length - 1]?.value} {yLabel}</strong>
+                        Latest: <strong className="text-lg font-bold" style={{color: color.includes('red') ? '#ef4444' : color.includes('blue') ? '#3b82f6' : '#10b981'}}>{data[data.length - 1]?.value} {yLabel}</strong>
                     </span>
                 </div>
             </div>
         );
     };
 
-    // Prepare chart data
+    // Prepare chart data with better filtering and validation
     const painData = savedData
-        .filter(day => day.painLevel !== null && day.painLevel !== undefined)
+        .filter(day => day.painLevel !== null && day.painLevel !== undefined && day.painLevel >= 0)
         .map(day => ({
             date: day.date,
-            value: day.painLevel
-        }));
+            value: parseInt(day.painLevel, 10)
+        }))
+        .filter(item => !isNaN(item.value)); // Extra safety check
 
-    const waterData = savedData.map(day => ({
-        date: day.date,
-        value: day.waterIntake || 0
-    }));
+    const waterData = savedData
+        .map(day => ({
+            date: day.date,
+            value: parseInt(day.waterIntake || 0, 10)
+        }))
+        .filter(item => !isNaN(item.value) && item.value >= 0);
 
-    const exerciseData = savedData.map(day => ({
-        date: day.date,
-        value: day.completedExercises || 0
-    }));
+    const exerciseData = savedData
+        .map(day => ({
+            date: day.date,
+            value: parseInt(day.completedExercises || 0, 10)
+        }))
+        .filter(item => !isNaN(item.value) && item.value >= 0);
+
+    // Debug logging (can be removed later)
+    console.log('Chart Data Debug:', { 
+        savedDataLength: savedData.length, 
+        painDataLength: painData.length, 
+        waterDataLength: waterData.length, 
+        exerciseDataLength: exerciseData.length,
+        sampleSavedData: savedData.slice(0, 2),
+        samplePainData: painData.slice(0, 2)
+    });
 
     // Calculate statistics
     const calculateStats = (data) => {
@@ -139,28 +188,31 @@ const HistoryPage = ({ recoveryData }) => {
                 </div>
             </div>
 
-            {/* Charts */}
-            <div className="space-y-6">
-                <SimpleChart 
+            {/* Charts with better spacing and design */}
+            <div className="space-y-8">
+                <TrendChart 
                     data={painData} 
-                    title="📊 Pain Level Trend (Last 14 Days)" 
+                    title="Pain Level Trend (Last 14 Days)" 
                     color="bg-gradient-to-t from-red-400 to-red-600" 
                     yLabel="/10"
                     maxValue={10}
+                    icon="📊"
                 />
                 
-                <SimpleChart 
+                <TrendChart 
                     data={waterData} 
-                    title="💧 Water Intake Trend (Last 14 Days)" 
+                    title="Water Intake Trend (Last 14 Days)" 
                     color="bg-gradient-to-t from-blue-400 to-blue-600" 
                     yLabel="glasses"
+                    icon="💧"
                 />
                 
-                <SimpleChart 
+                <TrendChart 
                     data={exerciseData} 
-                    title="🏋️ Exercise Completion Trend (Last 14 Days)" 
+                    title="Exercise Completion Trend (Last 14 Days)" 
                     color="bg-gradient-to-t from-green-400 to-green-600" 
                     yLabel="completed"
+                    icon="🏋️"
                 />
             </div>
 
